@@ -3,6 +3,8 @@ T.KATAKOTO (TETUBUN-HO) TEAM Redherring(STUDIO Sequence)
 
 for M5 Stack (Not CORE2)
 
+![TITLE](https://www.team-rh.com/wp-content/uploads/2019/05/D45o0SkU4AEMAmt.png)![GAME SCREEN](https://www.team-rh.com/wp-content/uploads/2019/05/D45o0SmUUAA67y8.png)
+
 *Overview
 
 -Works that ported STG(shooting game) [ETERNAL STRIKER Rr], which was operating in MIDP environment.
@@ -36,7 +38,7 @@ It can be disabled by commenting out [#define NEOPIXEL_ON].
  By pressing the [A] and [C] buttons at the same time on the title screen, you can switch the LED off and on.
  However, at present, the malfunction of the 0 light is confirmed.
  under investigation.
-
+ 
 ＊説明
 
 ガラケー前期、Doja2.1-3.0、あるいはMIDP時代に作った作品 [ETERNAL STRIKER Rr]の移植作です。
@@ -66,6 +68,10 @@ https://github.com/Makuna/NeoPixelBus
 
 [ #define NEOPIXEL_ON ]のコメントアウトで不使用化も可能です。
 
-プレイ動画 / PLAYMOVIE http://www.team-rh.com/wp-content/uploads/2019/05/D5CeQYKU0AE2ylZ.mp4
+プレイ動画 / PLAYMOVIE
+
+http://www.team-rh.com/wp-content/uploads/2019/05/D5CeQYKU0AE2ylZ.mp4
+
+![M5STACK+UNIT](https://www.team-rh.com/wp-content/uploads/2019/03/D2ZCS7-U8AAhDyx-large-300x300.jpg) ![M5STACK](https://www.team-rh.com/wp-content/uploads/2018/10/DqFidU2UwAA3hu7-large-300x300.jpg)
 
 

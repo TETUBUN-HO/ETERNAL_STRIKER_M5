@@ -9,6 +9,8 @@ for M5 Stack (Not CORE2)
 
 -Works that ported STG(shooting game) [ETERNAL STRIKER Rr], which was operating in MIDP environment.
 
+-SPIFFS is not used for anything other than score saving.
+
 -For [M5Stack-SD-Menu] system.
 
 +[M5Stack-SD-Menu] > Copyright 2018 tobozo http://github.com/tobozo
@@ -23,6 +25,12 @@ As long as there is a time-recovery barrier, [ENE], we have decided that the sys
 You can also use the [B] button or [A] and [C] simultaneously to consume a little [ENE] and enter the invincible mode spontaneously.
 By pressing the [A] and [C] buttons at the same time on the title screen, you can switch the LED off and on.
 You can mute the audio by pressing the [C] button at startup.
+
+-This is for button operation models such as NORMAL and FIRE.
+
+-Please refer to here for the touch panel and vibration compatible version for M5Stack CORE2.
+
+https://github.com/TETUBUN-HO/ETERNAL_STRIKER_M5_C2/
 
 +It corresponds to the stick of [M5 unit]. Connect with port A (I2C (G21 / G22)).
 
@@ -48,6 +56,13 @@ SPIFFSは、スコアセーブ以外に使っていません。
 縦STGを、無理やり横移動だけに調整していますが、こういう制限の元に作るのも個人的には好みです。
 時間回復する防壁、[ENE]が有るうちは、被弾しても大丈夫なシステムとしました。
 なお、[B]ボタンあるいは[A][C]同時押しで、[ENE]を少し消費して、自発的に無敵モードに入る事も出来ます。
+
+こちらは、無印版、FIREなど、ボタン操作機種用となります。
+
+M5Stack CORE2用の、タッチパネルと振動に対応した版は此方を参照ください。
+
+https://github.com/TETUBUN-HO/ETERNAL_STRIKER_M5_C2/
+
 
 [M5Stack-SD-Menu] システムに対応しています。
 

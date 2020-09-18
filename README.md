@@ -50,6 +50,7 @@ It can be disabled by commenting out [#define NEOPIXEL_ON].
 ＊説明
 
 ガラケー前期、Doja2.1-3.0、あるいはMIDP時代に作った作品 [ETERNAL STRIKER Rr]の移植作です。
+
 SPIFFSは、スコアセーブ以外に使っていません。
 
 元ゲーの最小構成版は、リソース含めて総計30kbとかで動いていました(一応、有料配信していたタイトルです)。

@@ -46,7 +46,7 @@
 #define PI 3.141592653589793
 //
 #include <M5Stack.h>
-#ifdef SDC_SYSTEML_ON
+#ifdef SDC_SYSTEM_ON
 #include "M5StackUpdater.h"
 #endif
 #include "Sprite_t_k_cst.h"
@@ -130,7 +130,7 @@ void setup() {
   M5.begin();
   //
   //SD_MENU_KICK
-  #ifdef SDC_SYSTEML_ON
+  #ifdef SDC_SYSTEM_ON
   if (digitalRead(BUTTON_A_PIN) == 0) {
     Serial.println("Will Load menu binary");
     updateFromFS(SD);

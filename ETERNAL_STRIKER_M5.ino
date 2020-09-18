@@ -3,6 +3,7 @@
 //T.KATAKOTO (TETUBUN-HO) TEAM Redherring(STUDIO Sequence)
 //18/10/28 Add STICK> 18/11/4 ADD I2C STICK 19/3/25
 //19/6/23 NEO PIXEL library change
+//20/9/17 SOUND OUT
 //
 //ETERNAL_STRIKER_M5 LICENSE:
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvStartvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -45,7 +46,7 @@
 #define PI 3.141592653589793
 //
 #include <M5Stack.h>
-#ifdef SDC_SYSTEM_ON
+#ifdef SDC_SYSTEML_ON
 #include "M5StackUpdater.h"
 #endif
 #include "Sprite_t_k_cst.h"
@@ -129,7 +130,7 @@ void setup() {
   M5.begin();
   //
   //SD_MENU_KICK
-  #ifdef SDC_SYSTEM_ON
+  #ifdef SDC_SYSTEML_ON
   if (digitalRead(BUTTON_A_PIN) == 0) {
     Serial.println("Will Load menu binary");
     updateFromFS(SD);
@@ -343,7 +344,7 @@ void Stick_Init() {
   //DUAL BUTTON CHEAK
   pinMode(DUAL_BUTTON_R_PIN, INPUT);
   pinMode(DUAL_BUTTON_B_PIN, INPUT);
-  if (digitalRead(DUAL_BUTTON_R_PIN) && digitalRead(DUAL_BUTTON_R_PIN))DUAL_BUTTON_FLAG = -1;
+  if (digitalRead(DUAL_BUTTON_R_PIN) && digitalRead(DUAL_BUTTON_B_PIN))DUAL_BUTTON_FLAG = -1;
 }
 //
 //Stick Read
@@ -661,9 +662,9 @@ void gameloop() {
         }
       }
       if (kct > 0)kct--;
-      if (but_A || but_B || S_but_A) {
+      if (but_A || but_B || S_but_A|| S_but_B) {
         CTL_Mode = 0;
-        if (S_but_A)CTL_Mode = 1;
+        if (S_but_A||S_but_B)CTL_Mode = 1;
         R_Key &= (~48);
         snd_play(1, "/enter.mp3", 0.2f);
         GS_mode = 0;
@@ -704,9 +705,9 @@ void gameloop() {
       if (NEO_P_MODE == 0)sprintf(str_out, "NPX:ON");
       else
         sprintf(str_out, "NPX:OFF");
-      put_sprite_str(str_out, DISPLAY_WIDTH2 + 3 - 12, DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
+      put_sprite_str(str_out, DISPLAY_WIDTH2 + 3 , DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
       sprintf(str_out, "Version:%3dNS", sys_ver);
-      put_sprite_str(str_out, DISPLAY_WIDTH3 + 5, DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
+      put_sprite_str(str_out, DISPLAY_WIDTH3 + 5-18, DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
       break;
     case 1://GAME MAIN
       if (GS_systimer == 0) {
@@ -1461,7 +1462,7 @@ void Run_OBJ() {
         }
         k = 250;
         if (bomb_nm >= 20 * 3)
-          if ((Key & 16) != 0 || S_but_A || ((Key & 4) != 0 && (Key & 8) != 0)) {
+          if ((Key & 16) != 0 || S_but_A|| S_but_B || ((Key & 4) != 0 && (Key & 8) != 0)) {
             bomb_nm -= 20 * 3;
             bomb_ct = o_p7[i] = 15;
             Key &= (~(4 | 8));

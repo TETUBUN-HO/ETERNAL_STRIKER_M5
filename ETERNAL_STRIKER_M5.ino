@@ -37,21 +37,28 @@
 //USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^End^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //
+#define SDC_SYSTEM_ON
+#define NEOPIXEL_ON
+//
 #define C16(_rr,_gg,_bb) ((ushort)(((_rr & 0xF8) << 8) | ((_gg & 0xFC) << 3) | ((_bb & 0xF8) >> 3)))
 #define C8(_rr,_gg,_bb) ((ushort)(((_rr & 0xE0)) | ((_gg & 0xE0) >>3) | (_bb >> 6)))
 #define PI 3.141592653589793
 //
 #include <M5Stack.h>
+#ifdef SDC_SYSTEML_ON
 #include "M5StackUpdater.h"
+#endif
 #include "Sprite_t_k_cst.h"
 //
 #include <Wire.h>
 #include "SPIFFS.h"
 //
+#ifdef NEOPIXEL_ON
 #include "NeoPixelBrightnessBus.h"
 #define M5STACK_FIRE_NEO_NUM_LEDS  10
 #define M5STACK_FIRE_NEO_DATA_PIN  15
 NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> strip(M5STACK_FIRE_NEO_NUM_LEDS, M5STACK_FIRE_NEO_DATA_PIN);
+#endif
 //
 int sys_ver = 155;
 byte NEO_P_MODE = 0;
@@ -116,24 +123,19 @@ short obj[32][5];
 //
 int scene, GS_systimer, GS_mode, stage;
 //
-#ifdef SCREEN_SHOT_MODE
-//SSSYTEM
-#include "bmp_header_8_QVGA.h"
-int SS_COUNT;
-char ss_name[32];
-#endif
-//
 void setup() {
   // put your setup code here, to run once:
   randomSeed(analogRead(0));
   M5.begin();
   //
   //SD_MENU_KICK
+  #ifdef SDC_SYSTEML_ON
   if (digitalRead(BUTTON_A_PIN) == 0) {
     Serial.println("Will Load menu binary");
     updateFromFS(SD);
     ESP.restart();
   }
+  #endif
   //M5.Lcd.setRotation(2);
   Wire.begin(21, 22, 400000);
   SPIFFS.begin();
@@ -145,9 +147,11 @@ void setup() {
   img.setColorDepth(8);
   _sprite_img8 = (uint8_t*)img.createSprite(240, 240);
   //
+  #ifdef NEOPIXEL_ON
   strip.Begin();
   strip.Show();
   strip.SetBrightness(64);
+  #endif
   //
   init();
   //
@@ -205,12 +209,14 @@ void loop() {
   //
   Loop_T_ADJ(0);
   if (NEO_P_MODE == 0 && led_ct % 2 == 0) {
+    #ifdef NEOPIXEL_ON
     for (uint8_t n = 0; n < M5STACK_FIRE_NEO_NUM_LEDS; n++) {
       int s = (int)led_pat[(n + led_ct / 2) % 10];
       RgbColor color = RgbColor(led_r * s / 16, led_g * s / 16, led_b * s / 16);
       strip.SetPixelColor(n, color);
     }
     strip.Show();
+    #endif
   }
   led_ct++;
   //
@@ -481,6 +487,7 @@ bool KeyPadLoop() {
 //NEO PIXEL USE ON/OFF
 //========================================================================
 void ClearNPX() {
+  #ifdef NEOPIXEL_ON
   if (NEO_P_MODE == 0) {
     pinMode(M5STACK_FIRE_NEO_DATA_PIN, OUTPUT);
     digitalWrite(M5STACK_FIRE_NEO_DATA_PIN, LOW);
@@ -500,6 +507,7 @@ void ClearNPX() {
     digitalWrite(M5STACK_FIRE_NEO_DATA_PIN, LOW);
     pinMode(M5STACK_FIRE_NEO_DATA_PIN, INPUT);
   }
+  #endif
 }
 //========================================================================
 //GAME_SYSTEM -MIDP BASE-

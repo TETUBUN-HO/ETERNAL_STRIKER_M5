@@ -1,9 +1,11 @@
 //
-//ETERNAL STRIKER Rr M5
+//ETERNAL STRIKER Rr M5 V1.6.0
 //T.KATAKOTO (TETUBUN-HO) TEAM Redherring(STUDIO Sequence)
+//
 //18/10/28 Add STICK> 18/11/4 ADD I2C STICK 19/3/25
 //19/6/23 NEO PIXEL library change
 //20/9/17 SOUND OUT
+//20/9/24 Add FACE JOYSTICK
 //
 //ETERNAL_STRIKER_M5 LICENSE:
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvStartvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -61,13 +63,16 @@
 NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> strip(M5STACK_FIRE_NEO_NUM_LEDS, M5STACK_FIRE_NEO_DATA_PIN);
 #endif
 //
-int sys_ver = 155;
+#define FACE_JOY_ADDR 0x5e
+//
+int sys_ver = 160;
 byte NEO_P_MODE = 0;
 //
 //Stick Read SYSTEM
 //
 short MIN_XA, MIN_YA, MAX_XA, MAX_YA;
 short BASE_XA, BASE_YA, BASE_VEC;
+int BASE_XI, BASE_YI;
 short READ_PIN_X = 35, READ_PIN_Y = 36; //ANALOG PIN
 short DUAL_BUTTON_R_PIN = 26; //ANALOG PIN
 short DUAL_BUTTON_B_PIN = 36; //ANALOG PIN
@@ -91,7 +96,7 @@ byte CTL_Mode = 0;
 int game_speed = 45;// 45msec 22fps
 //Decision counter for long press. *game_speed = real time
 byte LONG_P_CT = 2; //100ms
-byte Color_mode = 0; //0:ORIGINAL 1:Monotone(unused) 2:liquid crystal
+int GAME_LEVEL = 0; 
 //
 #define SPF_NOR (0<<1) //8bitSPRITE BITMAP
 #define SPF_MSX (1<<1) //1bitSPRITE
@@ -130,13 +135,13 @@ void setup() {
   M5.begin();
   //
   //SD_MENU_KICK
-  #ifdef SDC_SYSTEM_ON
+#ifdef SDC_SYSTEM_ON
   if (digitalRead(BUTTON_A_PIN) == 0) {
     Serial.println("Will Load menu binary");
     updateFromFS(SD);
     ESP.restart();
   }
-  #endif
+#endif
   //M5.Lcd.setRotation(2);
   Wire.begin(21, 22, 400000);
   SPIFFS.begin();
@@ -148,11 +153,11 @@ void setup() {
   img.setColorDepth(8);
   _sprite_img8 = (uint8_t*)img.createSprite(240, 240);
   //
-  #ifdef NEOPIXEL_ON
+#ifdef NEOPIXEL_ON
   strip.Begin();
   strip.Show();
   strip.SetBrightness(64);
-  #endif
+#endif
   //
   init();
   //
@@ -210,14 +215,28 @@ void loop() {
   //
   Loop_T_ADJ(0);
   if (NEO_P_MODE == 0 && led_ct % 2 == 0) {
-    #ifdef NEOPIXEL_ON
+#ifdef NEOPIXEL_ON
     for (uint8_t n = 0; n < M5STACK_FIRE_NEO_NUM_LEDS; n++) {
       int s = (int)led_pat[(n + led_ct / 2) % 10];
-      RgbColor color = RgbColor(led_r * s / 16, led_g * s / 16, led_b * s / 16);
+      RgbColor color = RgbColor(led_g * s / 16, led_r * s / 16, led_b * s / 16);
       strip.SetPixelColor(n, color);
     }
     strip.Show();
-    #endif
+#endif
+    //FACE JS
+    for (int i = 0; i < 4; i++)FACE_Led(i, 0, 0, 0);
+    if (SX_AXIS < -1 * AXIS_STUB) {
+      FACE_Led(0, led_r, led_g, led_b);
+    }
+    if (SX_AXIS > AXIS_STUB) {
+      FACE_Led(2, led_r, led_g, led_b);
+    }
+    if (SY_AXIS < -1 * AXIS_STUB) {
+      FACE_Led(3, led_r, led_g, led_b);
+    }
+    if (SY_AXIS > AXIS_STUB) {
+      FACE_Led(1, led_r, led_g, led_b);
+    }
   }
   led_ct++;
   //
@@ -341,6 +360,21 @@ void snd_stop(int nm) {
 //*****************************
 // Stick_Initialize
 void Stick_Init() {
+  //FACE JS CHEAK
+  uint8_t x_data_L, x_data_H;
+  uint8_t y_data_L, y_data_H;
+  Wire.requestFrom(FACE_JOY_ADDR, 5);
+  if (Wire.available()) {
+    y_data_L = Wire.read();
+    y_data_H = Wire.read();
+    x_data_L = Wire.read();
+    x_data_H = Wire.read();
+    BASE_XI = x_data_H << 8 | x_data_L;
+    BASE_YI = y_data_H << 8 | y_data_L;
+    Serial.println(BASE_XI);
+    Serial.println(BASE_YI);
+    return;
+  }
   //DUAL BUTTON CHEAK
   pinMode(DUAL_BUTTON_R_PIN, INPUT);
   pinMode(DUAL_BUTTON_B_PIN, INPUT);
@@ -353,6 +387,31 @@ void Stick_Init() {
 //
 void Stick_Read() {
   int x, y;
+  uint8_t x_data_L, x_data_H;
+  uint8_t y_data_L, y_data_H;
+  //FACE JS
+  Wire.requestFrom(FACE_JOY_ADDR, 5);
+  if (Wire.available()) {
+    y_data_L = Wire.read();
+    y_data_H = Wire.read();
+    x_data_L = Wire.read();
+    x_data_H = Wire.read();
+    x = x_data_H << 8 | x_data_L;
+    y = y_data_H << 8 | y_data_L;
+    // Z(0: released 1: pressed)
+    SB_FLAG = !Wire.read();
+    SX_AXIS = (x - BASE_XI) * 68 / (BASE_XI - 180);
+    SY_AXIS = -1 * (y - BASE_YI) * 68 / (BASE_YI - 180);
+    //ゼロ点遊び
+    if (SX_AXIS < 4 && SX_AXIS > -4)SX_AXIS = 0;
+    if (SY_AXIS < 4 && SY_AXIS > -4)SY_AXIS = 0;
+    //
+    if (SX_AXIS < -64)SX_AXIS = -64;
+    else if (SX_AXIS > 64)SX_AXIS = 64;
+    if (SY_AXIS < -64)SY_AXIS = -64;
+    else if (SY_AXIS > 64)SY_AXIS = 64;
+    return;
+  }
   //I2C JOYPAD DATA READ 2018/11/14 Add
   Wire.requestFrom(JOY_ADDR, 3);
   if (Wire.available()) {
@@ -488,7 +547,7 @@ bool KeyPadLoop() {
 //NEO PIXEL USE ON/OFF
 //========================================================================
 void ClearNPX() {
-  #ifdef NEOPIXEL_ON
+#ifdef NEOPIXEL_ON
   if (NEO_P_MODE == 0) {
     pinMode(M5STACK_FIRE_NEO_DATA_PIN, OUTPUT);
     digitalWrite(M5STACK_FIRE_NEO_DATA_PIN, LOW);
@@ -508,7 +567,18 @@ void ClearNPX() {
     digitalWrite(M5STACK_FIRE_NEO_DATA_PIN, LOW);
     pinMode(M5STACK_FIRE_NEO_DATA_PIN, INPUT);
   }
-  #endif
+#endif
+}
+//
+//FACE JS LED
+//
+void FACE_Led(int indexOfLED, int r, int g, int b) {
+  Wire.beginTransmission(FACE_JOY_ADDR);
+  Wire.write(indexOfLED);
+  Wire.write(r/6);
+  Wire.write(g/6);
+  Wire.write(b/6);
+  Wire.endTransmission();
 }
 //========================================================================
 //GAME_SYSTEM -MIDP BASE-
@@ -644,14 +714,26 @@ void gameloop() {
         led_r = 0; led_g = 0; led_b = 0;
       }
       //MENU PROCESSING
+      //GAME LEVEL SELECT
+        if (but_TOP && kct == 0) {
+          GAME_LEVEL--; if (GAME_LEVEL < 0)GAME_LEVEL = 0;
+          kct = 8;
+        }
+        if (but_DOWN && kct == 0) {
+          GAME_LEVEL++; if (GAME_LEVEL > 2)GAME_LEVEL = 2;
+          kct = 8;
+        }
+      //--NO OPTION
       //NEO_PIXEL ON/OFF
       if (but_LEFT && but_RIGHT && kct == 0) {
         NEO_P_MODE++; NEO_P_MODE %= 2;
+        if(NEO_P_MODE==0)GAME_LEVEL++; GAME_LEVEL %= 3;
         ClearNPX();
         kct = 8;
       }
       else
       {
+        //STAGE SELECT
         if (but_LEFT && kct == 0) {
           stage--; if (stage < 0)stage = 2;
           kct = 8;
@@ -661,10 +743,11 @@ void gameloop() {
           kct = 8;
         }
       }
+      //
       if (kct > 0)kct--;
-      if (but_A || but_B || S_but_A|| S_but_B) {
+      if (but_A || but_B || S_but_A || S_but_B) {
         CTL_Mode = 0;
-        if (S_but_A||S_but_B)CTL_Mode = 1;
+        if (S_but_A || S_but_B)CTL_Mode = 1;
         R_Key &= (~48);
         snd_play(1, "/enter.mp3", 0.2f);
         GS_mode = 0;
@@ -701,13 +784,20 @@ void gameloop() {
       }
       sprintf(str_out, "HI-SCORE:%5d", hi_sc[stage]);
       put_sprite_str(str_out, DISPLAY_WIDTH2 + 3, DISPLAY_HEIGHT2, 1);
+      //LEVEL
+      if (GAME_LEVEL == 0)sprintf(str_out, "LV:NOR");
+      else
+      if (GAME_LEVEL == 2)sprintf(str_out, "LV:EXT");
+      else
+        sprintf(str_out, "LV:HRD");
+      put_sprite_str(str_out, DISPLAY_WIDTH3 + 5+10*5 , DISPLAY_HEIGHT2, C8(192, 48, 0));
       //M5S Ver SP_STATUS
       if (NEO_P_MODE == 0)sprintf(str_out, "NPX:ON");
       else
         sprintf(str_out, "NPX:OFF");
       put_sprite_str(str_out, DISPLAY_WIDTH2 + 3 , DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
       sprintf(str_out, "Version:%3dNS", sys_ver);
-      put_sprite_str(str_out, DISPLAY_WIDTH3 + 5-18, DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
+      put_sprite_str(str_out, DISPLAY_WIDTH3 + 5 - 18, DISPLAY_HEIGHT2 + 222, C8(0, 24, 240));
       break;
     case 1://GAME MAIN
       if (GS_systimer == 0) {
@@ -1291,6 +1381,7 @@ void Run_OBJ() {
             else
               o_y[o_nm] = 3000;//PAD Mode
             o_h[o_nm] = 5;
+            //
             o_p1[o_nm] = 1; //武装
             o_p2[o_nm] = 0;
             o_p3[o_nm] = 0;
@@ -1315,6 +1406,7 @@ void Run_OBJ() {
                   o_pt[o_nm] = 26;
                 }
               }
+              if(GAME_LEVEL>1) dif+= 3;//EXT MODE
               break;
             case 1:
               dif = 2;
@@ -1327,9 +1419,11 @@ void Run_OBJ() {
                 o_ptf[o_nm] = 0;
                 o_pt[o_nm] = 22;
               }
+              if(GAME_LEVEL>1) dif+= 4;//EXT MODE
               break;
             case 2:
               dif = -10;
+              if(GAME_LEVEL>1)o_h[o_nm] = 3;//EXT MODE
               //森
               for (j = 0; j < 5; j++) {
                 if (Get_OBJ2((byte)0, (byte)13) != 65535) {
@@ -1445,7 +1539,7 @@ void Run_OBJ() {
         o_pt[i] = 1;
         if (o_hn[i] != 0) {
           if (dif > -10)dif--;
-          if (bomb_nm >= 20 * 6) {
+          if (bomb_nm >= 20 * 6 &&GAME_LEVEL==0) {
             bomb_nm -= 20 * 6; bomb_ct = o_p7[i] = 10;
             snd_play(2, "/change.mp3", 0.1f);
           }
@@ -1462,7 +1556,7 @@ void Run_OBJ() {
         }
         k = 250;
         if (bomb_nm >= 20 * 3)
-          if ((Key & 16) != 0 || S_but_A|| S_but_B || ((Key & 4) != 0 && (Key & 8) != 0)) {
+          if ((Key & 16) != 0 || S_but_A || S_but_B || ((Key & 4) != 0 && (Key & 8) != 0)) {
             bomb_nm -= 20 * 3;
             bomb_ct = o_p7[i] = 15;
             Key &= (~(4 | 8));

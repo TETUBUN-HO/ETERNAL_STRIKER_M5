@@ -64,6 +64,8 @@ NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> strip(M5STACK_FIRE_NEO_NU
 #endif
 //
 #define FACE_JOY_ADDR 0x5e
+#define KEYBOARD_I2C_ADDR 0x08
+#define KEYBOARD_INT 0x5
 //
 int sys_ver = 160;
 byte NEO_P_MODE = 0;
@@ -465,40 +467,59 @@ void ClearKeys() {
 //KEY INFO (A=bit3,C=bit2,B=bit4)
 //2018/10/9 T.K Replacement
 short Key = 0, R_Key = 0, Btn_A_ct = 0, Btn_B_ct = 0, Btn_C_ct = 0;
+bool gb_flag=false;
 bool KeyPadLoop() {
   Stick_Read();
   ClearKeys();
-  if (M5.BtnA.read()) {
-    Key |= 4;  //Acquire long press.
-    Btn_A_ct++;
-    if (Btn_A_ct > LONG_P_CT)Key |= 64;
-  }
-  else
-  { if ((Key & 4) && !(Key & 64))R_Key |= 4;
-    Key &= (~4); Key &= (~64); Btn_A_ct = 0;
-  }
-  //
-  if (M5.BtnC.read()) {
-    Key |= 8;  //Acquire long press.
-    Btn_C_ct++;
-    if (Btn_C_ct > LONG_P_CT)Key |= 128;
-  }
-  else
-  { if ((Key & 8) && !(Key & 128))R_Key |= 8;
-    Key &= (~8); Key &= (~128); Btn_C_ct = 0;
-  }
-  //
-  if (M5.BtnB.read()) {
-    Key |= 16;  //Acquire long press.
-    Btn_B_ct++;
-  }
-  else
-  { if (Key & 16) {
-      if (Btn_B_ct < LONG_P_CT)R_Key |= 16;
-      else
-        R_Key |= 32;
+  //FACE GB
+  pinMode(KEYBOARD_INT, INPUT_PULLUP);
+  if(digitalRead(KEYBOARD_INT) == LOW) {
+    Wire.requestFrom(KEYBOARD_I2C_ADDR, 1);  // request 1 byte from keyboard
+    while (Wire.available()) { 
+      R_Key=Key = ~Wire.read();                  // receive a byte as character
+      if (R_Key&1) {
+        but_TOP = true;
+      }
+      if (R_Key&2) {
+        but_DOWN = true;
+      }
+     gb_flag=true;
     }
-    Key &= (~16); Btn_B_ct = 0;
+  }
+  //
+  if(!gb_flag){
+    if (M5.BtnA.read()) {
+      Key |= 4;  //Acquire long press.
+      Btn_A_ct++;
+      if (Btn_A_ct > LONG_P_CT)Key |= 64;
+    }
+    else
+    { if ((Key & 4) && !(Key & 64))R_Key |= 4;
+      Key &= (~4); Key &= (~64); Btn_A_ct = 0;
+    }
+    //
+    if (M5.BtnC.read()) {
+      Key |= 8;  //Acquire long press.
+      Btn_C_ct++;
+      if (Btn_C_ct > LONG_P_CT)Key |= 128;
+    }
+    else
+    { if ((Key & 8) && !(Key & 128))R_Key |= 8;
+      Key &= (~8); Key &= (~128); Btn_C_ct = 0;
+    }
+    //
+    if (M5.BtnB.read()) {
+      Key |= 16;  //Acquire long press.
+      Btn_B_ct++;
+    }
+    else
+    { if (Key & 16) {
+        if (Btn_B_ct < LONG_P_CT)R_Key |= 16;
+        else
+          R_Key |= 32;
+      }
+      Key &= (~16); Btn_B_ct = 0;
+    }
   }
   //
   if ((R_Key & 4) || Key & 64) {
@@ -1556,7 +1577,9 @@ void Run_OBJ() {
         }
         k = 250;
         if (bomb_nm >= 20 * 3)
-          if ((Key & 16) != 0 || S_but_A || S_but_B || ((Key & 4) != 0 && (Key & 8) != 0)) {
+          if (((!gb_flag)&&((Key & 16) != 0 || S_but_A || S_but_B || ((Key & 4) != 0 && (Key & 8) != 0))) ||
+              (gb_flag&&(Key & 32)!=0)//FACE GB MODE
+          ) {
             bomb_nm -= 20 * 3;
             bomb_ct = o_p7[i] = 15;
             Key &= (~(4 | 8));
@@ -1564,7 +1587,9 @@ void Run_OBJ() {
             snd_play(1, "/change.mp3", 0.1f);
           }
         GS_key = Key;
-        if ((GS_key & (64 | 128)) != 0) k = 500;
+        if (((!gb_flag)&&(GS_key & (64 | 128)) != 0) ||
+           (gb_flag&&!(GS_key & 16) != 0)//FACE GB MODE
+        ) k = 500;
         if (CTL_Mode == 1) {
           if (SX_AXIS < -1 * AXIS_STUB || SX_AXIS > AXIS_STUB)o_x[i] += SX_AXIS * 560 / 64;
           if (SY_AXIS < -1 * AXIS_STUB || SY_AXIS > AXIS_STUB)o_y[i] += SY_AXIS * 560 / 64;

@@ -26,6 +26,10 @@ You can also use the [B] button or [A] and [C] simultaneously to consume a littl
 
 There is a difficulty level selection. (2020/09/24)
 On the title screen, you can switch the difficulty level by pressing the up and down keys for sticks and pressing [A] and [C] at the same time several times for the main unit only.
+
+The gamepad of [FACE panel] is always in the boost state, and you can slow down by pressing the A button.
+You can also use the B button to voluntarily enter invincible mode by consuming a little [ENE].
+
 In the case of only the main body, it is necessary to select the presence or absence of NeoPixel points and share the operation.
 
 -This is for button operation models such as NORMAL and FIRE.
@@ -34,7 +38,9 @@ In the case of only the main body, it is necessary to select the presence or abs
 
 https://github.com/TETUBUN-HO/ETERNAL_STRIKER_M5_C2/
 
-+It corresponds to the stick of [FACE unit]. (2020/09/24)
++It corresponds to the stick of [FACE panel]. (2020/09/24)
+
++It corresponds to the game pad of [FACE panel]. (2020/10/17)
 
 +It corresponds to the stick of [M5 unit]. Connect with port A (I2C (G21 / G22)).
 
@@ -68,6 +74,9 @@ SPIFFSは、スコアセーブ以外に使っていません。
 タイトル画面で、スティックの場合は上下キーで、本体のみの場合は、[A][C]同時押しを何度か押す事で、難易度が切り替えられます。
 本体のみの場合は、NeoPixelの点等有無の選択と共用操作となります。
 
+[FACE panel]のゲームパッドでは、常にブースト状態となり、Ａボタンを押す事で低速化可能です。
+Ｂボタンで、[ENE]を少し消費して、自発的に無敵モードに入る事も出来ます。
+
 こちらは、無印版、FIREなど、ボタン操作機種用となります。
 
 M5Stack CORE2用の、タッチパネルと振動に対応した版は此方を参照ください。
@@ -82,7 +91,9 @@ Released under the MIT license
 
 [ #define SDC_SYSTEM_ON ]のコメントアウトで不使用化も可能です。
 
-[FACE UNIT]のスティックに対応しています。(2020/09/24)
+[FACE panel]のスティックに対応しています。(2020/09/24)
+
+[FACE panel]のゲームパッドに対応しています。(2020/10/17)
 
 [M5 unit]のスティックに対応しています。ポートＡ（I2C(G21/G22)）で接続してください。
 
